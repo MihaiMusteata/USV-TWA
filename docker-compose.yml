@@ -1,0 +1,22 @@
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    environment:
+      SECRET_KEY: "schimba-acest-secret-in-productie"
+      DATABASE_PATH: "/data/shopping.db"
+    volumes:
+      - sqlite-data:/data
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: "http://localhost:8000"
+    depends_on:
+      - backend
+
+volumes:
+  sqlite-data:
