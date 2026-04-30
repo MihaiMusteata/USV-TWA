@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from passlib.context import CryptContext
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 DATABASE_PATH = os.getenv("DATABASE_PATH", "./shopping.db")
@@ -22,6 +22,8 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/autentificare")
 
 
 class UserAuth(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     email: EmailStr
     parola: str = Field(min_length=8)
 
@@ -33,6 +35,8 @@ class TokenResponse(BaseModel):
 
 
 class ProductBase(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nume: str = Field(min_length=1)
     cantitate: int = Field(ge=1)
     categorie: str = Field(min_length=1)
@@ -51,6 +55,8 @@ class ProductCreate(ProductBase):
 
 
 class ProductUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     nume: str | None = Field(default=None, min_length=1)
     cantitate: int | None = Field(default=None, ge=1)
     categorie: str | None = Field(default=None, min_length=1)
@@ -294,15 +300,24 @@ def update_product(
     db: Database,
     current_user: CurrentUser,
 ) -> Product:
-    get_product_or_404(db, product_id, current_user["id"])
+    existing_product = get_product_or_404(db, product_id, current_user["id"])
     updates = product.model_dump(exclude_unset=True, exclude_none=True)
 
     if updates:
-        columns = ", ".join(f"{field} = ?" for field in updates)
-        values = [int(value) if field == "cumparat" else value for field, value in updates.items()]
         db.execute(
-            f"UPDATE produse SET {columns} WHERE id = ? AND utilizator_id = ?",
-            (*values, product_id, current_user["id"]),
+            """
+            UPDATE produse
+            SET nume = ?, cantitate = ?, categorie = ?, cumparat = ?
+            WHERE id = ? AND utilizator_id = ?
+            """,
+            (
+                updates.get("nume", existing_product["nume"]),
+                updates.get("cantitate", existing_product["cantitate"]),
+                updates.get("categorie", existing_product["categorie"]),
+                int(updates.get("cumparat", existing_product["cumparat"])),
+                product_id,
+                current_user["id"],
+            ),
         )
         db.commit()
 
