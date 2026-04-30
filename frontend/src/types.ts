@@ -1,6 +1,6 @@
 export type UserAuth = {
   email: string;
-  parola: string;
+  password: string;
 };
 
 export type TokenResponse = {
@@ -11,21 +11,31 @@ export type TokenResponse = {
 
 export type Product = {
   id: number;
-  nume: string;
-  cantitate: number;
-  categorie: string;
-  cumparat: boolean;
-  utilizator_id: number;
+  name: string;
+  quantity: number;
+  category: string;
+  bought: boolean;
+  user_id: number;
 };
 
 export type ProductCreate = {
-  nume: string;
-  cantitate: number;
-  categorie: string;
+  name: string;
+  quantity: number;
+  category: string;
 };
 
 export type ProductUpdate = Partial<ProductCreate> & {
-  cumparat?: boolean;
+  bought?: boolean;
 };
 
-export type FilterType = "toate" | "necumparate" | "cumparate";
+export type FilterType = "all" | "pending" | "bought";
+
+export type AuthMode = "login" | "register";
+
+export type Theme = "light" | "dark";
+
+export type ProductStats = {
+  total: number;
+  bought: number;
+  pending: number;
+};
