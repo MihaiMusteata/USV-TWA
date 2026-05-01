@@ -10,8 +10,8 @@ export const emptyProductForm: ProductCreate = {
   category: "General",
 };
 
-export const filterOptions: { value: FilterType; label: string }[] = [
-  { value: "all", label: "Toate" },
-  { value: "pending", label: "Necumpărate" },
-  { value: "bought", label: "Cumpărate" },
+export const filterOptions: { value: FilterType; label: string; icon: string }[] = [
+  { value: "all", label: "Toate", icon: "mdi:format-list-bulleted" },
+  { value: "pending", label: "Necumpărate", icon: "mdi:clock-outline" },
+  { value: "bought", label: "Cumpărate", icon: "mdi:check-circle-outline" },
 ];

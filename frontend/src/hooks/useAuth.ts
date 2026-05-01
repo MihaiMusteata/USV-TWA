@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useState } from "react";
+import { toast } from "react-toastify";
 
 import { login, register } from "../api";
 import { EMAIL_KEY, TOKEN_KEY } from "../constants";
@@ -24,6 +25,7 @@ export function useAuth() {
     (message = "Sesiunea a expirat. Autentifică-te din nou.") => {
       clearSession();
       setAuthError(message);
+      toast.warning(message);
     },
     [clearSession],
   );
@@ -38,6 +40,7 @@ export function useAuth() {
   const logout = () => {
     clearSession();
     setAuthError("");
+    toast.info("Te-ai delogat.");
   };
 
   const submitAuth = async (event: FormEvent<HTMLFormElement>) => {
@@ -53,8 +56,11 @@ export function useAuth() {
       const response = authMode === "login" ? await login(payload) : await register(payload);
       saveSession(response.access_token, response.email);
       setAuthForm({ email: "", password: "" });
+      toast.success(authMode === "login" ? "Autentificare reușită." : "Cont creat cu succes.");
     } catch (error) {
-      setAuthError(error instanceof Error ? error.message : "Autentificarea a eșuat.");
+      const message = error instanceof Error ? error.message : "Autentificarea a eșuat.";
+      setAuthError(message);
+      toast.error(message);
     } finally {
       setIsSubmittingAuth(false);
     }

@@ -1,3 +1,6 @@
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
 import { AuthPanel } from "./components/AuthPanel";
 import { FilterTabs } from "./components/FilterTabs";
 import { Header } from "./components/Header";
@@ -75,6 +78,20 @@ function App() {
           </section>
         </main>
       )}
+
+      <ToastContainer
+        autoClose={2600}
+        closeOnClick
+        draggable
+        newestOnTop
+        pauseOnFocusLoss
+        position="top-right"
+        progressClassName="bg-emerald-500"
+        theme={theme.theme}
+        toastClassName={() =>
+          "rounded-lg border border-slate-200 bg-white text-slate-950 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
+        }
+      />
     </div>
   );
 }

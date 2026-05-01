@@ -1,4 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction } from "react";
+import { Icon } from "@iconify/react";
 
 import type { Product, ProductCreate } from "../types";
 import {
@@ -71,15 +72,21 @@ export function ProductCard({
             />
           </div>
           <div className="flex flex-wrap gap-2">
-            <button type="submit" className={primaryButtonClass} disabled={actionId === product.id}>
+            <button
+              type="submit"
+              className={`${primaryButtonClass} gap-2`}
+              disabled={actionId === product.id}
+            >
+              <Icon icon="mdi:content-save-outline" className="h-4 w-4" aria-hidden="true" />
               Salvează
             </button>
             <button
               type="button"
-              className={secondaryButtonClass}
+              className={`${secondaryButtonClass} gap-2`}
               onClick={onCancelEditing}
               disabled={actionId === product.id}
             >
+              <Icon icon="mdi:close-circle-outline" className="h-4 w-4" aria-hidden="true" />
               Renunță
             </button>
           </div>
@@ -103,15 +110,18 @@ export function ProductCard({
               {product.name}
             </h3>
             <span className="max-w-full truncate rounded-full bg-sky-100 px-2.5 py-1 text-xs font-semibold text-sky-700 dark:bg-sky-950/60 dark:text-sky-200">
+              <Icon icon="mdi:shape-outline" className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
               {product.category}
             </span>
             {product.bought ? (
               <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-200">
+                <Icon icon="mdi:check-circle-outline" className="mr-1 inline h-3.5 w-3.5 align-[-2px]" aria-hidden="true" />
                 Cumpărat
               </span>
             ) : null}
           </div>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+          <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400">
+            <Icon icon="mdi:counter" className="h-4 w-4" aria-hidden="true" />
             Cantitate: {product.quantity}
           </p>
         </div>
@@ -119,26 +129,29 @@ export function ProductCard({
         <div className="flex flex-wrap gap-2">
           <button
             type="button"
-            className={secondaryButtonClass}
+            className={`${secondaryButtonClass} gap-2`}
             onClick={() => onStartEditing(product)}
             disabled={actionId === product.id}
           >
+            <Icon icon="mdi:pencil-outline" className="h-4 w-4" aria-hidden="true" />
             Editează
           </button>
           <button
             type="button"
-            className={primaryButtonClass}
+            className={`${primaryButtonClass} gap-2`}
             onClick={() => onMarkAsBought(product.id)}
             disabled={product.bought || actionId === product.id}
           >
+            <Icon icon="mdi:cart-check" className="h-4 w-4" aria-hidden="true" />
             Marchează cumpărat
           </button>
           <button
             type="button"
-            className={dangerButtonClass}
+            className={`${dangerButtonClass} gap-2`}
             onClick={() => onDelete(product.id)}
             disabled={actionId === product.id}
           >
+            <Icon icon="mdi:trash-can-outline" className="h-4 w-4" aria-hidden="true" />
             Șterge
           </button>
         </div>

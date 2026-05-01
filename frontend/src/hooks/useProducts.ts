@@ -1,4 +1,5 @@
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 
 import {
   createProduct,
@@ -96,8 +97,11 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
       );
       setProducts((current) => [created, ...current]);
       setProductForm(emptyProductForm);
+      toast.success("Produs adăugat în listă.");
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Produsul nu a putut fi adăugat.");
+      const message = error instanceof Error ? error.message : "Produsul nu a putut fi adăugat.";
+      setProductError(message);
+      toast.error(message);
     }
   };
 
@@ -135,8 +139,11 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
         current.map((product) => (product.id === productId ? updated : product)),
       );
       setEditingId(null);
+      toast.success("Produs actualizat.");
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Produsul nu a putut fi editat.");
+      const message = error instanceof Error ? error.message : "Produsul nu a putut fi editat.";
+      setProductError(message);
+      toast.error(message);
     } finally {
       setActionId(null);
     }
@@ -154,8 +161,11 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
       setProducts((current) =>
         current.map((product) => (product.id === productId ? updated : product)),
       );
+      toast.success("Produs marcat ca fiind cumpărat.");
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Produsul nu a putut fi marcat.");
+      const message = error instanceof Error ? error.message : "Produsul nu a putut fi marcat.";
+      setProductError(message);
+      toast.error(message);
     } finally {
       setActionId(null);
     }
@@ -171,8 +181,11 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     try {
       await deleteProduct(productId, token);
       setProducts((current) => current.filter((product) => product.id !== productId));
+      toast.success("Produs șters.");
     } catch (error) {
-      setProductError(error instanceof Error ? error.message : "Produsul nu a putut fi șters.");
+      const message = error instanceof Error ? error.message : "Produsul nu a putut fi șters.";
+      setProductError(message);
+      toast.error(message);
     } finally {
       setActionId(null);
     }

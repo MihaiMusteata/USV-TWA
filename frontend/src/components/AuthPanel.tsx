@@ -1,4 +1,5 @@
 import { Dispatch, FormEvent, SetStateAction } from "react";
+import { Icon } from "@iconify/react";
 
 import type { AuthMode, UserAuth } from "../types";
 import { inputClass, primaryButtonClass } from "../utils/styles";
@@ -30,31 +31,34 @@ export function AuthPanel({
         <div className="mb-6 grid grid-cols-2 rounded-lg border border-slate-200 p-1 dark:border-slate-700">
           <button
             type="button"
-            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition ${
               authMode === "login"
                 ? "bg-emerald-600 text-white"
                 : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             }`}
             onClick={() => setAuthMode("login")}
           >
+            <Icon icon="mdi:login" className="h-4 w-4" aria-hidden="true" />
             Autentificare
           </button>
           <button
             type="button"
-            className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+            className={`inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-sm font-semibold transition ${
               authMode === "register"
                 ? "bg-emerald-600 text-white"
                 : "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
             }`}
             onClick={() => setAuthMode("register")}
           >
+            <Icon icon="mdi:account-plus-outline" className="h-4 w-4" aria-hidden="true" />
             Înregistrare
           </button>
         </div>
 
         <form className="space-y-4" onSubmit={onSubmit}>
           <div>
-            <label htmlFor="email" className="mb-1 block text-sm font-medium">
+            <label htmlFor="email" className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <Icon icon="mdi:email-outline" className="h-4 w-4 text-slate-500" aria-hidden="true" />
               Email
             </label>
             <input
@@ -71,7 +75,8 @@ export function AuthPanel({
           </div>
 
           <div>
-            <label htmlFor="password" className="mb-1 block text-sm font-medium">
+            <label htmlFor="password" className="mb-1 flex items-center gap-2 text-sm font-medium">
+              <Icon icon="mdi:lock-outline" className="h-4 w-4 text-slate-500" aria-hidden="true" />
               Parolă
             </label>
             <input
@@ -89,12 +94,18 @@ export function AuthPanel({
           </div>
 
           {authError ? (
-            <p className="rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200">
+            <p className="flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700 dark:border-rose-900/70 dark:bg-rose-950/40 dark:text-rose-200">
+              <Icon icon="mdi:alert-circle-outline" className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
               {authError}
             </p>
           ) : null}
 
-          <button type="submit" className={`${primaryButtonClass} w-full`} disabled={isSubmittingAuth}>
+          <button type="submit" className={`${primaryButtonClass} w-full gap-2`} disabled={isSubmittingAuth}>
+            <Icon
+              icon={authMode === "login" ? "mdi:login" : "mdi:account-plus-outline"}
+              className="h-4 w-4"
+              aria-hidden="true"
+            />
             {isSubmittingAuth
               ? "Se procesează..."
               : authMode === "login"
