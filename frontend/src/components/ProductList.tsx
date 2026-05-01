@@ -7,7 +7,7 @@ import { ProductCard } from "./ProductCard";
 type ProductListProps = {
   actionId: number | null;
   isLoading: boolean;
-  onDelete: (productId: number) => void;
+  onDelete: (product: Product) => void;
   onMarkAsBought: (productId: number) => void;
   onStartEditing: (product: Product) => void;
   productError: string;

@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
 import { AuthPanel } from "./components/AuthPanel";
+import { ConfirmationDialog } from "./components/ConfirmationDialog";
 import { FilterTabs } from "./components/FilterTabs";
 import { Header } from "./components/Header";
 import { ProductList } from "./components/ProductList";
@@ -11,17 +13,60 @@ import { StatsCards } from "./components/StatsCards";
 import { useAuth } from "./hooks/useAuth";
 import { useProducts } from "./hooks/useProducts";
 import { useTheme } from "./hooks/useTheme";
+import type { Product } from "./types";
+
+
+type ConfirmationState = {
+  confirmLabel: string;
+  description: string;
+  icon: string;
+  onConfirm: () => Promise<void>;
+  title: string;
+};
 
 
 function App() {
   const theme = useTheme();
   const auth = useAuth();
   const products = useProducts(auth.token, auth.expireSession);
+  const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null);
 
   const handleLogout = () => {
     auth.logout();
     products.resetProducts();
     products.setProductError("");
+    setConfirmation(null);
+  };
+
+  const requestDeleteProduct = (product: Product) => {
+    setConfirmation({
+      confirmLabel: "Șterge produsul",
+      description: `Produsul "${product.name}" va fi șters definitiv din lista ta.`,
+      icon: "mdi:trash-can-outline",
+      onConfirm: async () => {
+        await products.handleDeleteProduct(product.id);
+        setConfirmation(null);
+      },
+      title: "Ștergi acest produs?",
+    });
+  };
+
+  const requestClearBoughtProducts = () => {
+    if (products.stats.bought === 0) {
+      void products.handleClearBoughtProducts();
+      return;
+    }
+
+    setConfirmation({
+      confirmLabel: "Curăță lista",
+      description: `${products.stats.bought} produse cumpărate vor fi șterse definitiv din lista ta.`,
+      icon: "mdi:broom",
+      onConfirm: async () => {
+        await products.handleClearBoughtProducts();
+        setConfirmation(null);
+      },
+      title: "Ștergi produsele cumpărate?",
+    });
   };
 
   return (
@@ -93,7 +138,7 @@ function App() {
               categories={products.categories}
               categoryFilter={products.categoryFilter}
               isBulkAction={products.actionId !== null}
-              onClearBought={products.handleClearBoughtProducts}
+              onClearBought={requestClearBoughtProducts}
               onOpenCreate={products.openCreateModal}
               searchTerm={products.searchTerm}
               setCategoryFilter={products.setCategoryFilter}
@@ -111,7 +156,7 @@ function App() {
             <ProductList
               actionId={products.actionId}
               isLoading={products.isLoadingProducts}
-              onDelete={products.handleDeleteProduct}
+              onDelete={requestDeleteProduct}
               onMarkAsBought={products.handleMarkAsBought}
               onStartEditing={products.startEditing}
               productError={products.productError}
@@ -142,6 +187,21 @@ function App() {
           />
         </main>
       )}
+
+      <ConfirmationDialog
+        confirmLabel={confirmation?.confirmLabel ?? ""}
+        description={confirmation?.description ?? ""}
+        icon={confirmation?.icon}
+        isOpen={confirmation !== null}
+        isProcessing={products.actionId !== null}
+        onClose={() => setConfirmation(null)}
+        onConfirm={() => {
+          if (confirmation) {
+            void confirmation.onConfirm();
+          }
+        }}
+        title={confirmation?.title ?? ""}
+      />
 
       <ToastContainer
         autoClose={2600}

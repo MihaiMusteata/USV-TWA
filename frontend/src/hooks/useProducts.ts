@@ -229,7 +229,7 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
   };
 
   const handleDeleteProduct = async (productId: number) => {
-    if (!token || !window.confirm("Ștergi acest produs?")) {
+    if (!token) {
       return;
     }
 
@@ -256,10 +256,6 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     const boughtProducts = products.filter((product) => product.bought);
     if (boughtProducts.length === 0) {
       toast.info("Nu există produse cumpărate de șters.");
-      return;
-    }
-
-    if (!window.confirm(`Ștergi ${boughtProducts.length} produse cumpărate?`)) {
       return;
     }
 

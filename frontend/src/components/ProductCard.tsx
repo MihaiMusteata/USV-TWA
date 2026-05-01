@@ -10,7 +10,7 @@ import {
 
 type ProductCardProps = {
   actionId: number | null;
-  onDelete: (productId: number) => void;
+  onDelete: (product: Product) => void;
   onMarkAsBought: (productId: number) => void;
   onStartEditing: (product: Product) => void;
   product: Product;
@@ -106,7 +106,7 @@ export function ProductCard({
           <button
             type="button"
             className={`${dangerButtonClass} gap-2`}
-            onClick={() => onDelete(product.id)}
+            onClick={() => onDelete(product)}
             disabled={actionId !== null}
           >
             <Icon icon="mdi:trash-can-outline" className="h-4 w-4" aria-hidden="true" />
