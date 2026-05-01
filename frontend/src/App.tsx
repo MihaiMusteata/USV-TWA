@@ -88,9 +88,6 @@ function App() {
         position="top-right"
         progressClassName="bg-emerald-500"
         theme={theme.theme}
-        toastClassName={() =>
-          "rounded-lg border border-slate-200 bg-white text-slate-950 shadow-lg dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
-        }
       />
     </div>
   );
