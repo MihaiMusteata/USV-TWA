@@ -1,39 +1,28 @@
-import { Dispatch, FormEvent, SetStateAction } from "react";
 import { Icon } from "@iconify/react";
 
-import type { Product, ProductCreate } from "../types";
+import type { Product } from "../types";
 import { ProductCard } from "./ProductCard";
 
 
 type ProductListProps = {
   actionId: number | null;
-  editForm: ProductCreate;
-  editingId: number | null;
   isLoading: boolean;
-  onCancelEditing: () => void;
   onDelete: (productId: number) => void;
   onMarkAsBought: (productId: number) => void;
   onStartEditing: (product: Product) => void;
-  onUpdate: (event: FormEvent<HTMLFormElement>, productId: number) => void;
   productError: string;
   products: Product[];
-  setEditForm: Dispatch<SetStateAction<ProductCreate>>;
 };
 
 
 export function ProductList({
   actionId,
-  editForm,
-  editingId,
   isLoading,
-  onCancelEditing,
   onDelete,
   onMarkAsBought,
   onStartEditing,
-  onUpdate,
   productError,
   products,
-  setEditForm,
 }: ProductListProps) {
   return (
     <div className="mt-4 space-y-3">
@@ -61,16 +50,11 @@ export function ProductList({
       {products.map((product) => (
         <ProductCard
           actionId={actionId}
-          editForm={editForm}
-          isEditing={editingId === product.id}
           key={product.id}
-          onCancelEditing={onCancelEditing}
           onDelete={onDelete}
           onMarkAsBought={onMarkAsBought}
           onStartEditing={onStartEditing}
-          onUpdate={onUpdate}
           product={product}
-          setEditForm={setEditForm}
         />
       ))}
     </div>

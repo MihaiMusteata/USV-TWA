@@ -34,6 +34,10 @@ export type AuthMode = "login" | "register";
 
 export type Theme = "light" | "dark";
 
+export type ProductModalMode = "create" | "edit";
+
+export type SortType = "recent" | "name" | "quantity";
+
 export type ProductStats = {
   total: number;
   bought: number;

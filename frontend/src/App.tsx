@@ -4,8 +4,9 @@ import "react-toastify/dist/ReactToastify.css";
 import { AuthPanel } from "./components/AuthPanel";
 import { FilterTabs } from "./components/FilterTabs";
 import { Header } from "./components/Header";
-import { ProductForm } from "./components/ProductForm";
 import { ProductList } from "./components/ProductList";
+import { ProductModal } from "./components/ProductModal";
+import { ProductToolbar } from "./components/ProductToolbar";
 import { StatsCards } from "./components/StatsCards";
 import { useAuth } from "./hooks/useAuth";
 import { useProducts } from "./hooks/useProducts";
@@ -45,37 +46,100 @@ function App() {
         />
       ) : (
         <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+          <section className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="grid gap-0 lg:grid-cols-[1fr_320px]">
+              <div className="p-5 sm:p-6">
+                <p className="text-xs font-semibold uppercase text-emerald-600 dark:text-emerald-300">
+                  Dashboard cumpărături
+                </p>
+                <h2 className="mt-2 text-2xl font-bold tracking-normal text-slate-950 dark:text-white sm:text-3xl">
+                  Planifică lista, marchează progresul și ține coșul sub control.
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600 dark:text-slate-400">
+                  Caută rapid produse, filtrează după categorie și gestionează lista printr-un
+                  formular modal compact.
+                </p>
+              </div>
+              <div className="border-t border-slate-200 bg-emerald-50 p-5 dark:border-slate-800 dark:bg-emerald-950/20 lg:border-l lg:border-t-0">
+                <p className="text-sm font-medium text-emerald-700 dark:text-emerald-300">
+                  Progres cumpărături
+                </p>
+                <div className="mt-4 h-3 overflow-hidden rounded-full bg-white dark:bg-slate-800">
+                  <div
+                    className="h-full rounded-full bg-emerald-600 transition-all"
+                    style={{
+                      width: `${
+                        products.stats.total > 0
+                          ? Math.round((products.stats.bought / products.stats.total) * 100)
+                          : 0
+                      }%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-3 text-sm text-emerald-700 dark:text-emerald-200">
+                  {products.stats.total > 0
+                    ? `${products.stats.bought} din ${products.stats.total} produse cumpărate`
+                    : "Adaugă primul produs ca să începi lista."}
+                </p>
+              </div>
+            </div>
+          </section>
+
           <StatsCards stats={products.stats} />
 
-          <section className="mt-6 grid gap-6 lg:grid-cols-[360px_1fr]">
-            <ProductForm
-              form={products.productForm}
-              onSubmit={products.handleCreateProduct}
-              setForm={products.setProductForm}
+          <section className="mt-6 space-y-4">
+            <ProductToolbar
+              boughtCount={products.stats.bought}
+              categories={products.categories}
+              categoryFilter={products.categoryFilter}
+              isBulkAction={products.actionId !== null}
+              onClearBought={products.handleClearBoughtProducts}
+              onOpenCreate={products.openCreateModal}
+              searchTerm={products.searchTerm}
+              setCategoryFilter={products.setCategoryFilter}
+              setSearchTerm={products.setSearchTerm}
+              setSortMode={products.setSortMode}
+              shownCount={products.filteredProducts.length}
+              sortMode={products.sortMode}
+              totalCount={products.stats.total}
             />
 
-            <section className="min-w-0">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <h2 className="text-lg font-semibold">Produse</h2>
-                <FilterTabs filter={products.filter} setFilter={products.setFilter} />
-              </div>
+            <div className="flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:flex-row sm:items-center sm:justify-between">
+              <FilterTabs filter={products.filter} setFilter={products.setFilter} />
+            </div>
 
-              <ProductList
-                actionId={products.actionId}
-                editForm={products.editForm}
-                editingId={products.editingId}
-                isLoading={products.isLoadingProducts}
-                onCancelEditing={products.stopEditing}
-                onDelete={products.handleDeleteProduct}
-                onMarkAsBought={products.handleMarkAsBought}
-                onStartEditing={products.startEditing}
-                onUpdate={products.handleUpdateProduct}
-                productError={products.productError}
-                products={products.filteredProducts}
-                setEditForm={products.setEditForm}
-              />
-            </section>
+            <ProductList
+              actionId={products.actionId}
+              isLoading={products.isLoadingProducts}
+              onDelete={products.handleDeleteProduct}
+              onMarkAsBought={products.handleMarkAsBought}
+              onStartEditing={products.startEditing}
+              productError={products.productError}
+              products={products.filteredProducts}
+            />
           </section>
+
+          <ProductModal
+            form={products.productModalMode === "create" ? products.productForm : products.editForm}
+            isOpen={products.isProductModalOpen}
+            isSubmitting={products.actionId !== null}
+            mode={products.productModalMode}
+            onClose={products.closeProductModal}
+            onSubmit={(event) => {
+              if (products.productModalMode === "create") {
+                void products.handleCreateProduct(event);
+                return;
+              }
+              if (products.editingId !== null) {
+                void products.handleUpdateProduct(event, products.editingId);
+              }
+            }}
+            setForm={
+              products.productModalMode === "create"
+                ? products.setProductForm
+                : products.setEditForm
+            }
+          />
         </main>
       )}
 

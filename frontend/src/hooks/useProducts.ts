@@ -9,7 +9,14 @@ import {
   updateProduct,
 } from "../api";
 import { emptyProductForm } from "../constants";
-import type { FilterType, Product, ProductCreate, ProductStats } from "../types";
+import type {
+  FilterType,
+  Product,
+  ProductCreate,
+  ProductModalMode,
+  ProductStats,
+  SortType,
+} from "../types";
 
 
 type UnauthorizedHandler = () => void;
@@ -24,10 +31,16 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<ProductCreate>(emptyProductForm);
   const [actionId, setActionId] = useState<number | null>(null);
+  const [isProductModalOpen, setIsProductModalOpen] = useState(false);
+  const [productModalMode, setProductModalMode] = useState<ProductModalMode>("create");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortMode, setSortMode] = useState<SortType>("recent");
 
   const resetProducts = useCallback(() => {
     setProducts([]);
     setEditingId(null);
+    setIsProductModalOpen(false);
   }, []);
 
   const loadProducts = useCallback(
@@ -69,15 +82,52 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     };
   }, [products]);
 
+  const categories = useMemo(
+    () => Array.from(new Set(products.map((product) => product.category))).sort((a, b) =>
+      a.localeCompare(b, "ro"),
+    ),
+    [products],
+  );
+
   const filteredProducts = useMemo(() => {
-    if (filter === "bought") {
-      return products.filter((product) => product.bought);
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    const visibleProducts = products.filter((product) => {
+      const matchesStatus =
+        filter === "all" ||
+        (filter === "bought" && product.bought) ||
+        (filter === "pending" && !product.bought);
+      const matchesCategory = categoryFilter === "all" || product.category === categoryFilter;
+      const matchesSearch =
+        !normalizedSearch ||
+        product.name.toLowerCase().includes(normalizedSearch) ||
+        product.category.toLowerCase().includes(normalizedSearch);
+
+      return matchesStatus && matchesCategory && matchesSearch;
+    });
+
+    if (sortMode === "name") {
+      return [...visibleProducts].sort((a, b) => a.name.localeCompare(b.name, "ro"));
     }
-    if (filter === "pending") {
-      return products.filter((product) => !product.bought);
+    if (sortMode === "quantity") {
+      return [...visibleProducts].sort((a, b) => b.quantity - a.quantity);
     }
-    return products;
-  }, [filter, products]);
+    return visibleProducts;
+  }, [categoryFilter, filter, products, searchTerm, sortMode]);
+
+  const openCreateModal = () => {
+    setProductModalMode("create");
+    setProductForm(emptyProductForm);
+    setEditingId(null);
+    setIsProductModalOpen(true);
+  };
+
+  const closeProductModal = () => {
+    setIsProductModalOpen(false);
+    setEditingId(null);
+    setEditForm(emptyProductForm);
+    setProductError("");
+  };
 
   const handleCreateProduct = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,6 +136,7 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     }
 
     setProductError("");
+    setActionId(-2);
     try {
       const created = await createProduct(
         {
@@ -97,21 +148,27 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
       );
       setProducts((current) => [created, ...current]);
       setProductForm(emptyProductForm);
+      setIsProductModalOpen(false);
       toast.success("Produs adăugat în listă.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Produsul nu a putut fi adăugat.";
       setProductError(message);
       toast.error(message);
+    } finally {
+      setActionId(null);
     }
   };
 
   const startEditing = (product: Product) => {
+    setProductModalMode("edit");
     setEditingId(product.id);
     setEditForm({
       name: product.name,
       quantity: product.quantity,
       category: product.category,
     });
+    setProductError("");
+    setIsProductModalOpen(true);
   };
 
   const handleUpdateProduct = async (
@@ -138,7 +195,7 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
       setProducts((current) =>
         current.map((product) => (product.id === productId ? updated : product)),
       );
-      setEditingId(null);
+      closeProductModal();
       toast.success("Produs actualizat.");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Produsul nu a putut fi editat.";
@@ -191,27 +248,71 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     }
   };
 
+  const handleClearBoughtProducts = async () => {
+    if (!token) {
+      return;
+    }
+
+    const boughtProducts = products.filter((product) => product.bought);
+    if (boughtProducts.length === 0) {
+      toast.info("Nu există produse cumpărate de șters.");
+      return;
+    }
+
+    if (!window.confirm(`Ștergi ${boughtProducts.length} produse cumpărate?`)) {
+      return;
+    }
+
+    setActionId(-1);
+    setProductError("");
+    try {
+      await Promise.all(boughtProducts.map((product) => deleteProduct(product.id, token)));
+      setProducts((current) => current.filter((product) => !product.bought));
+      toast.success("Produsele cumpărate au fost șterse.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Produsele cumpărate nu au putut fi șterse.";
+      setProductError(message);
+      toast.error(message);
+      void loadProducts(token);
+    } finally {
+      setActionId(null);
+    }
+  };
+
   return {
     actionId,
+    categories,
+    categoryFilter,
+    closeProductModal,
     editForm,
     editingId,
     filter,
     filteredProducts,
+    handleClearBoughtProducts,
     handleCreateProduct,
     handleDeleteProduct,
     handleMarkAsBought,
     handleUpdateProduct,
+    isProductModalOpen,
     isLoadingProducts,
     loadProducts,
+    openCreateModal,
     productError,
     productForm,
+    productModalMode,
     resetProducts,
+    searchTerm,
+    setCategoryFilter,
     setEditForm,
     setFilter,
     setProductError,
     setProductForm,
+    setSearchTerm,
+    setSortMode,
+    sortMode,
     startEditing,
     stats,
-    stopEditing: () => setEditingId(null),
+    stopEditing: closeProductModal,
   };
 }
