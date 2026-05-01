@@ -73,7 +73,7 @@ export function ProductToolbar({
         </div>
       </div>
 
-      <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_220px_180px]">
+      <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_220px_180px_auto] lg:items-end">
         <label className="relative block">
           <span className="mb-1 flex items-center gap-2 text-sm font-medium">
             <Icon icon="mdi:magnify" className="h-4 w-4 text-slate-500" aria-hidden="true" />
@@ -128,21 +128,21 @@ export function ProductToolbar({
             ))}
           </select>
         </label>
-      </div>
 
-      {(searchTerm || categoryFilter !== "all") ? (
-        <button
-          type="button"
-          className={`${secondaryButtonClass} mt-3 gap-2`}
-          onClick={() => {
-            setSearchTerm("");
-            setCategoryFilter("all");
-          }}
-        >
-          <Icon icon="mdi:filter-remove-outline" className="h-4 w-4" aria-hidden="true" />
-          Resetează filtrele
-        </button>
-      ) : null}
+        {(searchTerm || categoryFilter !== "all") ? (
+          <button
+            type="button"
+            className={`${secondaryButtonClass} gap-2 whitespace-nowrap`}
+            onClick={() => {
+              setSearchTerm("");
+              setCategoryFilter("all");
+            }}
+          >
+            <Icon icon="mdi:filter-remove-outline" className="h-4 w-4" aria-hidden="true" />
+            Resetează
+          </button>
+        ) : null}
+      </div>
     </section>
   );
 }

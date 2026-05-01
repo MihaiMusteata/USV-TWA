@@ -1,7 +1,7 @@
 from fastapi import APIRouter, status
 
 from app.database.connection import Database
-from app.schemas.auth import TokenResponse, UserAuth
+from app.schemas.auth import RefreshTokenRequest, TokenResponse, UserAuth
 from app.services import auth_service
 
 
@@ -16,3 +16,8 @@ def register_user(user: UserAuth, db: Database) -> TokenResponse:
 @router.post("/autentificare", response_model=TokenResponse)
 def login_user(user: UserAuth, db: Database) -> TokenResponse:
     return auth_service.authenticate_user(user, db)
+
+
+@router.post("/refresh-token", response_model=TokenResponse)
+def refresh_token(request: RefreshTokenRequest, db: Database) -> TokenResponse:
+    return auth_service.refresh_user_tokens(request, db)

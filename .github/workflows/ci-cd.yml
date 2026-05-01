@@ -104,10 +104,12 @@ jobs:
       - name: Prepare Kubernetes secrets
         env:
           APP_SECRET_KEY: ${{ secrets.APP_SECRET_KEY }}
+          APP_REFRESH_SECRET_KEY: ${{ secrets.APP_REFRESH_SECRET_KEY }}
         run: |
           kubectl apply -f k8s/namespace.yaml
           kubectl -n "$APP_NAMESPACE" create secret generic shopping-list-secret \
             --from-literal=SECRET_KEY="$APP_SECRET_KEY" \
+            --from-literal=REFRESH_SECRET_KEY="${APP_REFRESH_SECRET_KEY:-$APP_SECRET_KEY}" \
             --dry-run=client \
             -o yaml | kubectl apply -f -
           doctl registry kubernetes-manifest --namespace "$APP_NAMESPACE" | kubectl apply -f -

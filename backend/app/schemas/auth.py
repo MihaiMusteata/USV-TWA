@@ -10,5 +10,12 @@ class UserAuth(BaseModel):
 
 class TokenResponse(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
     email: EmailStr
+
+
+class RefreshTokenRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    refresh_token: str = Field(min_length=1)

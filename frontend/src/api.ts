@@ -1,10 +1,27 @@
-import type { Product, ProductCreate, ProductUpdate, TokenResponse, UserAuth } from "./types";
+import type {
+  Product,
+  ProductCreate,
+  ProductUpdate,
+  RefreshTokenRequest,
+  TokenResponse,
+  UserAuth,
+} from "./types";
 
 const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 
 type RequestOptions = RequestInit & {
   token?: string;
 };
+
+export class ApiError extends Error {
+  status: number;
+
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { token, headers, ...requestOptions } = options;
@@ -29,7 +46,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     } catch {
       message = response.statusText || message;
     }
-    throw new Error(message);
+    throw new ApiError(message, response.status);
   }
 
   if (response.status === 204) {
@@ -48,6 +65,13 @@ export function register(payload: UserAuth): Promise<TokenResponse> {
 
 export function login(payload: UserAuth): Promise<TokenResponse> {
   return request<TokenResponse>("/autentificare", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export function refreshToken(payload: RefreshTokenRequest): Promise<TokenResponse> {
+  return request<TokenResponse>("/refresh-token", {
     method: "POST",
     body: JSON.stringify(payload),
   });

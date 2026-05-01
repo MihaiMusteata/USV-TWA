@@ -5,8 +5,13 @@ export type UserAuth = {
 
 export type TokenResponse = {
   access_token: string;
+  refresh_token: string;
   token_type: string;
   email: string;
+};
+
+export type RefreshTokenRequest = {
+  refresh_token: string;
 };
 
 export type Product = {

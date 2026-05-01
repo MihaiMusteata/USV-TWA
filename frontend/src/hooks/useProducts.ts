@@ -2,6 +2,7 @@ import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 
 import {
+  ApiError,
   createProduct,
   deleteProduct,
   getProducts,
@@ -20,9 +21,14 @@ import type {
 
 
 type UnauthorizedHandler = () => void;
+type RefreshSessionHandler = () => Promise<string | null>;
 
 
-export function useProducts(token: string | null, onUnauthorized: UnauthorizedHandler) {
+export function useProducts(
+  token: string | null,
+  onUnauthorized: UnauthorizedHandler,
+  refreshSession: RefreshSessionHandler,
+) {
   const [products, setProducts] = useState<Product[]>([]);
   const [filter, setFilter] = useState<FilterType>("all");
   const [isLoadingProducts, setIsLoadingProducts] = useState(false);
@@ -43,26 +49,59 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     setIsProductModalOpen(false);
   }, []);
 
-  const loadProducts = useCallback(
-    async (activeToken = token) => {
-      if (!activeToken) {
-        return;
+  const runAuthorizedRequest = useCallback(
+    async <T,>(requestFn: (activeToken: string) => Promise<T>) => {
+      if (!token) {
+        return null;
       }
-
-      setIsLoadingProducts(true);
-      setProductError("");
 
       try {
-        setProducts(await getProducts(activeToken));
-      } catch {
-        resetProducts();
-        onUnauthorized();
-      } finally {
-        setIsLoadingProducts(false);
+        return await requestFn(token);
+      } catch (error) {
+        if (!(error instanceof ApiError) || error.status !== 401) {
+          throw error;
+        }
+
+        const refreshedToken = await refreshSession();
+        if (!refreshedToken) {
+          resetProducts();
+          onUnauthorized();
+          return null;
+        }
+
+        try {
+          return await requestFn(refreshedToken);
+        } catch (retryError) {
+          if (retryError instanceof ApiError && retryError.status === 401) {
+            resetProducts();
+            onUnauthorized();
+            return null;
+          }
+          throw retryError;
+        }
       }
     },
-    [onUnauthorized, resetProducts, token],
+    [onUnauthorized, refreshSession, resetProducts, token],
   );
+
+  const loadProducts = useCallback(async () => {
+    setIsLoadingProducts(true);
+    setProductError("");
+
+    try {
+      const loadedProducts = await runAuthorizedRequest(getProducts);
+      if (loadedProducts) {
+        setProducts(loadedProducts);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Produsele nu au putut fi încărcate.";
+      setProductError(message);
+      toast.error(message);
+    } finally {
+      setIsLoadingProducts(false);
+    }
+  }, [runAuthorizedRequest]);
 
   useEffect(() => {
     if (!token) {
@@ -70,7 +109,7 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
       return;
     }
 
-    void loadProducts(token);
+    void loadProducts();
   }, [loadProducts, resetProducts, token]);
 
   const stats: ProductStats = useMemo(() => {
@@ -138,14 +177,20 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     setProductError("");
     setActionId(-2);
     try {
-      const created = await createProduct(
-        {
-          name: productForm.name.trim(),
-          quantity: productForm.quantity,
-          category: productForm.category.trim(),
-        },
-        token,
+      const created = await runAuthorizedRequest((activeToken) =>
+        createProduct(
+          {
+            name: productForm.name.trim(),
+            quantity: productForm.quantity,
+            category: productForm.category.trim(),
+          },
+          activeToken,
+        ),
       );
+      if (!created) {
+        return;
+      }
+
       setProducts((current) => [created, ...current]);
       setProductForm(emptyProductForm);
       setIsProductModalOpen(false);
@@ -183,15 +228,21 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     setActionId(productId);
     setProductError("");
     try {
-      const updated = await updateProduct(
-        productId,
-        {
-          name: editForm.name.trim(),
-          quantity: editForm.quantity,
-          category: editForm.category.trim(),
-        },
-        token,
+      const updated = await runAuthorizedRequest((activeToken) =>
+        updateProduct(
+          productId,
+          {
+            name: editForm.name.trim(),
+            quantity: editForm.quantity,
+            category: editForm.category.trim(),
+          },
+          activeToken,
+        ),
       );
+      if (!updated) {
+        return;
+      }
+
       setProducts((current) =>
         current.map((product) => (product.id === productId ? updated : product)),
       );
@@ -214,7 +265,13 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     setActionId(productId);
     setProductError("");
     try {
-      const updated = await markAsBought(productId, token);
+      const updated = await runAuthorizedRequest((activeToken) =>
+        markAsBought(productId, activeToken),
+      );
+      if (!updated) {
+        return;
+      }
+
       setProducts((current) =>
         current.map((product) => (product.id === productId ? updated : product)),
       );
@@ -236,7 +293,13 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     setActionId(productId);
     setProductError("");
     try {
-      await deleteProduct(productId, token);
+      const deleted = await runAuthorizedRequest((activeToken) =>
+        deleteProduct(productId, activeToken),
+      );
+      if (deleted === null) {
+        return;
+      }
+
       setProducts((current) => current.filter((product) => product.id !== productId));
       toast.success("Produs șters.");
     } catch (error) {
@@ -262,7 +325,13 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
     setActionId(-1);
     setProductError("");
     try {
-      await Promise.all(boughtProducts.map((product) => deleteProduct(product.id, token)));
+      const deletedProducts = await runAuthorizedRequest((activeToken) =>
+        Promise.all(boughtProducts.map((product) => deleteProduct(product.id, activeToken))),
+      );
+      if (!deletedProducts) {
+        return;
+      }
+
       setProducts((current) => current.filter((product) => !product.bought));
       toast.success("Produsele cumpărate au fost șterse.");
     } catch (error) {
@@ -270,7 +339,7 @@ export function useProducts(token: string | null, onUnauthorized: UnauthorizedHa
         error instanceof Error ? error.message : "Produsele cumpărate nu au putut fi șterse.";
       setProductError(message);
       toast.error(message);
-      void loadProducts(token);
+      void loadProducts();
     } finally {
       setActionId(null);
     }

@@ -28,7 +28,7 @@ type ConfirmationState = {
 function App() {
   const theme = useTheme();
   const auth = useAuth();
-  const products = useProducts(auth.token, auth.expireSession);
+  const products = useProducts(auth.token, auth.expireSession, auth.refreshSession);
   const [confirmation, setConfirmation] = useState<ConfirmationState | null>(null);
 
   const handleLogout = () => {

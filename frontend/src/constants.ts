@@ -1,6 +1,7 @@
 import type { FilterType, ProductCreate, SortType } from "./types";
 
 export const TOKEN_KEY = "shopping_token";
+export const REFRESH_TOKEN_KEY = "shopping_refresh_token";
 export const EMAIL_KEY = "shopping_email";
 export const THEME_KEY = "shopping_theme";
 

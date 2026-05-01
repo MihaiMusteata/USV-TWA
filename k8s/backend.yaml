@@ -46,6 +46,16 @@ spec:
                 secretKeyRef:
                   name: shopping-list-secret
                   key: SECRET_KEY
+            - name: REFRESH_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: shopping-list-secret
+                  key: REFRESH_SECRET_KEY
+                  optional: true
+            - name: ACCESS_TOKEN_EXPIRE_MINUTES
+              value: "15"
+            - name: REFRESH_TOKEN_EXPIRE_DAYS
+              value: "7"
           volumeMounts:
             - name: sqlite-data
               mountPath: /data
