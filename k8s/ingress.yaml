@@ -11,9 +11,9 @@ spec:
   ingressClassName: traefik
   tls:
     - hosts:
-        - shopping-list.134-209-139-131.sslip.io
+        - mihail-musteata.mibo.monster
   rules:
-    - host: shopping-list.134-209-139-131.sslip.io
+    - host: mihail-musteata.mibo.monster
       http:
         paths:
           - path: /

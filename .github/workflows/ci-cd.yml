@@ -17,7 +17,7 @@ env:
   FRONTEND_IMAGE: shopping-list-frontend
   APP_NAMESPACE: shopping-list
   TRAEFIK_NAMESPACE: traefik
-  APP_URL: https://shopping-list.134-209-139-131.sslip.io
+  APP_URL: https://mihail-musteata.mibo.monster
 
 jobs:
   validate:
