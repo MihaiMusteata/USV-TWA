@@ -1,4 +1,48 @@
+# Git / editor
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+*.pem
+*.key
+
+# Python cache / tooling
 __pycache__/
-*.pyc
+**/__pycache__/
+*.py[cod]
+*$py.class
+.python-version
 .venv/
-shopping.db
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Local SQLite / runtime files
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+data/
+tmp/
+temp/
+
+# Logs
+*.log

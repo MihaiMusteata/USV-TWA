@@ -1,0 +1,69 @@
+# This file protects accidental root-context Docker builds.
+# The project Dockerfiles use ./backend and ./frontend contexts.
+
+# Git / CI / editor
+.git/
+.github/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local environment and secrets
+.env
+.env.*
+!.env.example
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+*.pem
+*.key
+k8s/*secret*.yaml
+k8s/*secret*.yml
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+*.egg-info/
+
+# Node / Vite
+node_modules/
+**/node_modules/
+dist/
+**/dist/
+.vite/
+**/.vite/
+coverage/
+**/coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# SQLite / runtime data
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-shm
+*.db-wal
+data/
+docker-data/
+tmp/
+temp/
+
+# Logs
+*.log
