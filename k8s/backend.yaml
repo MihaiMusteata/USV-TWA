@@ -1,0 +1,81 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: shopping-list-sqlite
+  namespace: shopping-list
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: do-block-storage
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopping-list-backend
+  namespace: shopping-list
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: shopping-list-backend
+  template:
+    metadata:
+      labels:
+        app: shopping-list-backend
+    spec:
+      imagePullSecrets:
+        - name: registry-usv-twa-project
+      containers:
+        - name: backend
+          image: registry.digitalocean.com/usv-twa-project/shopping-list-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PORT
+              value: "8000"
+            - name: DATABASE_PATH
+              value: /data/shopping.db
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: shopping-list-secret
+                  key: SECRET_KEY
+          volumeMounts:
+            - name: sqlite-data
+              mountPath: /data
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8000
+            initialDelaySeconds: 20
+            periodSeconds: 20
+      volumes:
+        - name: sqlite-data
+          persistentVolumeClaim:
+            claimName: shopping-list-sqlite
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shopping-list-backend
+  namespace: shopping-list
+spec:
+  type: ClusterIP
+  selector:
+    app: shopping-list-backend
+  ports:
+    - name: http
+      port: 8000
+      targetPort: 8000

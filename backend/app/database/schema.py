@@ -24,6 +24,31 @@ CREATE TABLE IF NOT EXISTS products (
 );
 """
 
+ALLOWED_SQL_IDENTIFIERS = {
+    "users",
+    "products",
+    "parola_hash",
+    "password_hash",
+    "creat_la",
+    "created_at",
+    "nume",
+    "name",
+    "cantitate",
+    "quantity",
+    "categorie",
+    "category",
+    "cumparat",
+    "bought",
+    "utilizator_id",
+    "user_id",
+}
+
+
+def quote_identifier(identifier: str) -> str:
+    if identifier not in ALLOWED_SQL_IDENTIFIERS:
+        raise ValueError("Identificator SQL invalid.")
+    return f'"{identifier}"'
+
 
 def initialize_database() -> None:
     directory = os.path.dirname(DATABASE_PATH)
@@ -47,7 +72,8 @@ def table_exists(db: sqlite3.Connection, table_name: str) -> bool:
 
 
 def table_columns(db: sqlite3.Connection, table_name: str) -> set[str]:
-    return {row[1] for row in db.execute(f"PRAGMA table_info({table_name})").fetchall()}
+    table_identifier = quote_identifier(table_name)
+    return {row[1] for row in db.execute(f"PRAGMA table_info({table_identifier})").fetchall()}
 
 
 def rename_column_if_needed(
@@ -58,7 +84,13 @@ def rename_column_if_needed(
 ) -> None:
     columns = table_columns(db, table_name)
     if old_column in columns and new_column not in columns:
-        db.execute(f"ALTER TABLE {table_name} RENAME COLUMN {old_column} TO {new_column}")
+        table_identifier = quote_identifier(table_name)
+        old_column_identifier = quote_identifier(old_column)
+        new_column_identifier = quote_identifier(new_column)
+        db.execute(
+            f"ALTER TABLE {table_identifier} "
+            f"RENAME COLUMN {old_column_identifier} TO {new_column_identifier}",
+        )
 
 
 def migrate_legacy_schema(db: sqlite3.Connection) -> None:

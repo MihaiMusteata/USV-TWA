@@ -8,6 +8,11 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+kubeconfig
+kubeconfig.*
+*.kubeconfig
+k8s/*secret*.yaml
+k8s/*secret*.yml
 
 # Python
 .venv/
