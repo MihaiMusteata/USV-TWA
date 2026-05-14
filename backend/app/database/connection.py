@@ -17,6 +17,11 @@ DatabaseRow = dict[str, Any] | sqlite3.Row
 logger = logging.getLogger(__name__)
 
 
+def database_error_detail(error: BaseException) -> str:
+    message = str(error).replace("\n", " ")
+    return f"Baza de date nu este disponibila: {type(error).__name__}: {message[:240]}"
+
+
 class DatabaseSession:
     def __init__(
         self,
@@ -72,7 +77,7 @@ def get_db():
         logger.exception("Database initialization failed")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Baza de date nu este disponibila. Verifica DATABASE_URL.",
+            detail=database_error_detail(error),
         ) from error
 
     if has_postgres_database():
@@ -85,7 +90,7 @@ def get_db():
             logger.exception("Database connection failed")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-                detail="Baza de date nu este disponibila. Verifica DATABASE_URL.",
+                detail=database_error_detail(error),
             ) from error
         except Exception:
             if session is not None:
