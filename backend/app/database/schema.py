@@ -73,11 +73,23 @@ ALLOWED_SQL_IDENTIFIERS = {
     "user_id",
 }
 
+_database_initialized = False
+
 
 def quote_identifier(identifier: str) -> str:
     if identifier not in ALLOWED_SQL_IDENTIFIERS:
         raise ValueError("Identificator SQL invalid.")
     return f'"{identifier}"'
+
+
+def ensure_database_initialized() -> None:
+    global _database_initialized
+
+    if _database_initialized:
+        return
+
+    initialize_database()
+    _database_initialized = True
 
 
 def initialize_database() -> None:

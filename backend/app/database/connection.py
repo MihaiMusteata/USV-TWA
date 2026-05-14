@@ -1,16 +1,19 @@
 import sqlite3
+import logging
 from collections.abc import Sequence
 from typing import Annotated, Any
 
-from fastapi import Depends
-from psycopg import Connection
+from fastapi import Depends, HTTPException, status
+from psycopg import Connection, OperationalError
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
 from app.core.config import DATABASE_PATH, DATABASE_URL, DB_POOL_MAX_SIZE, has_postgres_database
+from app.database.schema import ensure_database_initialized
 
 
 DatabaseRow = dict[str, Any] | sqlite3.Row
+logger = logging.getLogger(__name__)
 
 
 class DatabaseSession:
@@ -62,14 +65,31 @@ def get_postgres_pool() -> ConnectionPool:
 
 
 def get_db():
+    try:
+        ensure_database_initialized()
+    except (OperationalError, OSError) as error:
+        logger.exception("Database initialization failed")
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Baza de date nu este disponibila. Verifica DATABASE_URL.",
+        ) from error
+
     if has_postgres_database():
-        with get_postgres_pool().connection() as connection:
-            session = DatabaseSession(connection, "postgres", from_pool=True)
-            try:
+        session: DatabaseSession | None = None
+        try:
+            with get_postgres_pool().connection() as connection:
+                session = DatabaseSession(connection, "postgres", from_pool=True)
                 yield session
-            except Exception:
+        except (OperationalError, OSError) as error:
+            logger.exception("Database connection failed")
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Baza de date nu este disponibila. Verifica DATABASE_URL.",
+            ) from error
+        except Exception:
+            if session is not None:
                 session.rollback()
-                raise
+            raise
         return
 
     db = sqlite3.connect(DATABASE_PATH, check_same_thread=False)

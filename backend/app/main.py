@@ -8,6 +8,7 @@ from app.core.config import (
     CORS_ALLOW_CREDENTIALS,
     CORS_ORIGIN_REGEX,
     CORS_ORIGINS,
+    INITIALIZE_DATABASE_ON_STARTUP,
 )
 from app.database.schema import initialize_database
 from app.routers import auth, health, products
@@ -15,7 +16,8 @@ from app.routers import auth, health, products
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    initialize_database()
+    if INITIALIZE_DATABASE_ON_STARTUP:
+        initialize_database()
     yield
 
 
