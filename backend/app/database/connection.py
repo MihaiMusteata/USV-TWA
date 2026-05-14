@@ -4,9 +4,10 @@ from collections.abc import Sequence
 from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, status
-from psycopg import Connection, OperationalError
+from psycopg import Connection
+from psycopg import Error as PsycopgError
 from psycopg.rows import dict_row
-from psycopg_pool import ConnectionPool
+from psycopg_pool import ConnectionPool, PoolTimeout
 
 from app.core.config import DATABASE_PATH, DATABASE_URL, DB_POOL_MAX_SIZE, has_postgres_database
 from app.database.schema import ensure_database_initialized
@@ -67,7 +68,7 @@ def get_postgres_pool() -> ConnectionPool:
 def get_db():
     try:
         ensure_database_initialized()
-    except (OperationalError, OSError) as error:
+    except (PsycopgError, PoolTimeout, OSError, TimeoutError) as error:
         logger.exception("Database initialization failed")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
@@ -80,7 +81,7 @@ def get_db():
             with get_postgres_pool().connection() as connection:
                 session = DatabaseSession(connection, "postgres", from_pool=True)
                 yield session
-        except (OperationalError, OSError) as error:
+        except (PsycopgError, PoolTimeout, OSError, TimeoutError) as error:
             logger.exception("Database connection failed")
             raise HTTPException(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,

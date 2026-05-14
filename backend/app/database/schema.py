@@ -2,7 +2,8 @@ import os
 import sqlite3
 import time
 
-from psycopg import OperationalError, connect
+from psycopg import Error as PsycopgError
+from psycopg import connect
 
 from app.core.config import (
     DATABASE_PATH,
@@ -104,7 +105,7 @@ def initialize_database() -> None:
                             db.execute(statement)
                     db.commit()
                 break
-            except OperationalError:
+            except PsycopgError:
                 if attempt == DB_CONNECT_RETRIES - 1:
                     raise
                 time.sleep(DB_CONNECT_RETRY_DELAY_SECONDS)
