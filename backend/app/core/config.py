@@ -17,6 +17,13 @@ def normalize_database_url(database_url: str | None) -> str | None:
     if not database_url:
         return None
 
+    database_url = database_url.strip().strip("\"'")
+    for env_name in ("DATABASE_URL", "POSTGRES_URL", "POSTGRES_PRISMA_URL"):
+        prefix = f"{env_name}="
+        if database_url.startswith(prefix):
+            database_url = database_url.removeprefix(prefix).strip().strip("\"'")
+            break
+
     parsed = urlparse(database_url)
     hostname = parsed.hostname or ""
     if "supabase.co" not in hostname and "pooler.supabase.com" not in hostname:
