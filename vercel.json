@@ -2,12 +2,6 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npm --prefix frontend ci && VITE_API_URL=/api npm --prefix frontend run build",
   "outputDirectory": "frontend/dist",
-  "rewrites": [
-    {
-      "source": "/:path*",
-      "destination": "/index.html"
-    }
-  ],
   "functions": {
     "api/**/*.py": {
       "includeFiles": "backend/app/**",
