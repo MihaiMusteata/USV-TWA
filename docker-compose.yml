@@ -1,4 +1,15 @@
 services:
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_DB: shopping_list
+      POSTGRES_USER: shopping
+      POSTGRES_PASSWORD: shopping
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
   backend:
     build: ./backend
     ports:
@@ -8,9 +19,9 @@ services:
       REFRESH_SECRET_KEY: "schimba-acest-refresh-secret-in-productie"
       ACCESS_TOKEN_EXPIRE_MINUTES: "15"
       REFRESH_TOKEN_EXPIRE_DAYS: "7"
-      DATABASE_PATH: "/data/shopping.db"
-    volumes:
-      - sqlite-data:/data
+      DATABASE_URL: "postgresql://shopping:shopping@postgres:5432/shopping_list"
+    depends_on:
+      - postgres
 
   frontend:
     build: ./frontend
@@ -22,4 +33,4 @@ services:
       - backend
 
 volumes:
-  sqlite-data:
+  postgres-data:

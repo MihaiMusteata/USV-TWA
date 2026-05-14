@@ -1,4 +1,3 @@
-import sqlite3
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
@@ -6,7 +5,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError
 
 from app.core.security import decode_access_token
-from app.database.connection import Database
+from app.database.connection import Database, DatabaseRow
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/autentificare")
@@ -15,7 +14,7 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/autentificare")
 def get_current_user(
     token: Annotated[str, Depends(oauth2_scheme)],
     db: Database,
-) -> sqlite3.Row:
+) -> DatabaseRow:
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token invalid",
@@ -29,7 +28,7 @@ def get_current_user(
         raise unauthorized
 
     user = db.execute(
-        "SELECT id, email FROM users WHERE id = ?",
+        "SELECT id, email FROM users WHERE id = %s",
         (user_id,),
     ).fetchone()
 
@@ -38,4 +37,4 @@ def get_current_user(
     return user
 
 
-CurrentUser = Annotated[sqlite3.Row, Depends(get_current_user)]
+CurrentUser = Annotated[DatabaseRow, Depends(get_current_user)]

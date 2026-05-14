@@ -1,10 +1,19 @@
 import os
 import sqlite3
+import time
 
-from app.core.config import DATABASE_PATH
+from psycopg import OperationalError, connect
+
+from app.core.config import (
+    DATABASE_PATH,
+    DATABASE_URL,
+    DB_CONNECT_RETRIES,
+    DB_CONNECT_RETRY_DELAY_SECONDS,
+    has_postgres_database,
+)
 
 
-CREATE_SCHEMA_SQL = """
+SQLITE_SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT NOT NULL UNIQUE,
@@ -22,6 +31,27 @@ CREATE TABLE IF NOT EXISTS products (
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+"""
+
+POSTGRES_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS users (
+    id BIGSERIAL PRIMARY KEY,
+    email TEXT NOT NULL UNIQUE,
+    password_hash TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS products (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    quantity INTEGER NOT NULL CHECK (quantity >= 1),
+    category TEXT NOT NULL,
+    bought BOOLEAN NOT NULL DEFAULT FALSE,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_products_user_id ON products(user_id);
 """
 
 ALLOWED_SQL_IDENTIFIERS = {
@@ -51,6 +81,23 @@ def quote_identifier(identifier: str) -> str:
 
 
 def initialize_database() -> None:
+    if has_postgres_database():
+        if DATABASE_URL is None:
+            raise RuntimeError("DATABASE_URL is required for PostgreSQL schema setup.")
+        for attempt in range(DB_CONNECT_RETRIES):
+            try:
+                with connect(DATABASE_URL, prepare_threshold=None) as db:
+                    for statement in POSTGRES_SCHEMA_SQL.split(";"):
+                        if statement.strip():
+                            db.execute(statement)
+                    db.commit()
+                break
+            except OperationalError:
+                if attempt == DB_CONNECT_RETRIES - 1:
+                    raise
+                time.sleep(DB_CONNECT_RETRY_DELAY_SECONDS)
+        return
+
     directory = os.path.dirname(DATABASE_PATH)
     if directory:
         os.makedirs(directory, exist_ok=True)
@@ -58,7 +105,7 @@ def initialize_database() -> None:
     with sqlite3.connect(DATABASE_PATH) as db:
         db.execute("PRAGMA foreign_keys = OFF")
         migrate_legacy_schema(db)
-        db.executescript(CREATE_SCHEMA_SQL)
+        db.executescript(SQLITE_SCHEMA_SQL)
         db.commit()
         db.execute("PRAGMA foreign_keys = ON")
 

@@ -1,5 +1,3 @@
-import sqlite3
-
 from fastapi import HTTPException, status
 from jose import JWTError
 
@@ -10,6 +8,7 @@ from app.core.security import (
     hash_password,
     verify_password,
 )
+from app.database.connection import DatabaseSession
 from app.schemas.auth import RefreshTokenRequest, TokenResponse, UserAuth
 
 
@@ -21,28 +20,28 @@ def build_token_response(user_id: int, email: str) -> TokenResponse:
     )
 
 
-def register_user(user: UserAuth, db: sqlite3.Connection) -> TokenResponse:
+def register_user(user: UserAuth, db: DatabaseSession) -> TokenResponse:
     email = str(user.email).lower()
-    existing_user = db.execute("SELECT id FROM users WHERE email = ?", (email,)).fetchone()
+    existing_user = db.execute("SELECT id FROM users WHERE email = %s", (email,)).fetchone()
     if existing_user is not None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email deja existent",
         )
 
-    cursor = db.execute(
-        "INSERT INTO users (email, password_hash) VALUES (?, ?)",
+    row = db.execute(
+        "INSERT INTO users (email, password_hash) VALUES (%s, %s) RETURNING id",
         (email, hash_password(user.password)),
-    )
+    ).fetchone()
     db.commit()
 
-    return build_token_response(cursor.lastrowid, email)
+    return build_token_response(row["id"], email)
 
 
-def authenticate_user(user: UserAuth, db: sqlite3.Connection) -> TokenResponse:
+def authenticate_user(user: UserAuth, db: DatabaseSession) -> TokenResponse:
     email = str(user.email).lower()
     existing_user = db.execute(
-        "SELECT id, email, password_hash FROM users WHERE email = ?",
+        "SELECT id, email, password_hash FROM users WHERE email = %s",
         (email,),
     ).fetchone()
 
@@ -56,7 +55,7 @@ def authenticate_user(user: UserAuth, db: sqlite3.Connection) -> TokenResponse:
     return build_token_response(existing_user["id"], existing_user["email"])
 
 
-def refresh_user_tokens(request: RefreshTokenRequest, db: sqlite3.Connection) -> TokenResponse:
+def refresh_user_tokens(request: RefreshTokenRequest, db: DatabaseSession) -> TokenResponse:
     unauthorized = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Token invalid",
@@ -70,7 +69,7 @@ def refresh_user_tokens(request: RefreshTokenRequest, db: sqlite3.Connection) ->
         raise unauthorized
 
     existing_user = db.execute(
-        "SELECT id, email FROM users WHERE id = ?",
+        "SELECT id, email FROM users WHERE id = %s",
         (user_id,),
     ).fetchone()
 
